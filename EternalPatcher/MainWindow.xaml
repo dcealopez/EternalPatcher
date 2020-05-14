@@ -1,0 +1,34 @@
+﻿<Window x:Class="EternalPatcher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:EternalPatcher"
+        mc:Ignorable="d"
+        Title="EternalPatcher"
+        SizeToContent="WidthAndHeight" Icon="Resources\EternalPatcher.ico" ResizeMode="CanMinimize" >
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Content="Patch" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="10" x:Name="PatchButton" Click="PatchButton_Click" IsEnabled="False" />
+            <Button Grid.Column="1" Content="Check for updates" HorizontalAlignment="Right" VerticalAlignment="Top" Width="106" Margin="50 10 10 10" x:Name="CheckUpdatesButton" Click="CheckUpdatesButton_Click" IsEnabled="False" />
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StatusBar DockPanel.Dock="Bottom">
+                <StatusBarItem>
+                    <TextBlock x:Name="PatcherStatus" />
+                </StatusBarItem>
+            </StatusBar>
+        </Grid>        
+    </Grid>
+</Window>
