@@ -77,7 +77,7 @@ namespace EternalPatcher
                 .ContinueWith(t => MessageBox.Show(t.Exception.InnerException.Message, "Unexpected error", MessageBoxButton.OK, MessageBoxImage.Error),
                     CancellationToken.None,
                     TaskContinuationOptions.OnlyOnFaulted,
-                    TaskScheduler.FromCurrentSynchronizationContext());            
+                    TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         /// <summary>
@@ -87,7 +87,7 @@ namespace EternalPatcher
         private void Patch(string filePath)
         {
             // First check if the selected executable is valid
-            // and if the game build is supported      
+            // and if the game build is supported
             Dispatcher.Invoke(() => PatcherStatus.Text = "Checking game version...");
 
             GameBuild gameBuild = null;
@@ -144,8 +144,13 @@ namespace EternalPatcher
                 {
                     try
                     {
+                        if (File.Exists(saveFileDialog.FileName))
+                        {
+                            File.Delete(saveFileDialog.FileName);
+                        }
+
                         File.Copy(filePath, saveFileDialog.FileName);
-                    }                 
+                    }
                     catch (Exception)
                     {
                         var continueOrCancel = MessageBox.Show("An error occured while backing up the game executable. " +
@@ -170,7 +175,7 @@ namespace EternalPatcher
 
             try
             {
-                var patchingResult = OffsetPatcher.Patch(filePath, gameBuild.Patches);
+                var patchingResult = Patcher.ApplyPatches(filePath, gameBuild.Patches);
 
                 // Display patching results
                 var succesfulPatches = new StringBuilder();
@@ -191,7 +196,7 @@ namespace EternalPatcher
                     failedPatches.Append(patchResult.Patch.Description).Append("\n");
                     fails++;
                 }
-                
+
                 if (successes > 0)
                 {
                     resultsString.Append("The following patches were successfuly applied:\n\n");
@@ -244,7 +249,7 @@ namespace EternalPatcher
             // Check if there are available updates
             var updatesNeeded = false;
 
-            try            
+            try
             {
                 updatesNeeded = Patcher.AnyUpdateAvailable();
 
@@ -255,7 +260,7 @@ namespace EternalPatcher
                         MessageBox.Show("You are already have the latest patch definitions.",
                             "Check for updates",
                             MessageBoxButton.OK,
-                            MessageBoxImage.Information);                        
+                            MessageBoxImage.Information);
                     }
 
                     // Load current patch definitions if needed
@@ -264,7 +269,7 @@ namespace EternalPatcher
                         Dispatcher.Invoke(() => PatcherStatus.Text = "Loading patch definitions...");
                         Patcher.LoadPatchDefinitions();
                     }
-                    
+
                     Dispatcher.Invoke(() => PatchButton.IsEnabled = true);
                     Dispatcher.Invoke(() => CheckUpdatesButton.IsEnabled = true);
                     Dispatcher.Invoke(() => PatcherStatus.Text = "Ready.");
@@ -282,7 +287,7 @@ namespace EternalPatcher
                 Dispatcher.Invoke(() => CheckUpdatesButton.IsEnabled = true);
                 Dispatcher.Invoke(() => PatcherStatus.Text = "Ready.");
                 return;
-            }            
+            }
 
             // Download updates if needed
             if (updatesNeeded)
@@ -293,7 +298,7 @@ namespace EternalPatcher
                     Patcher.DownloadLatestPatchDefinitions();
                     Dispatcher.Invoke(() => PatcherStatus.Text = "Updates downloaded");
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
                     MessageBox.Show("An error occured while downloading the updates.",
                         "Error",
@@ -329,7 +334,7 @@ namespace EternalPatcher
                 Dispatcher.Invoke(() => PatchButton.IsEnabled = true);
                 Dispatcher.Invoke(() => CheckUpdatesButton.IsEnabled = true);
                 Dispatcher.Invoke(() => PatcherStatus.Text = "Ready.");
-            }                       
+            }
         }
     }
 }

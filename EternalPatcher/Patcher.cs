@@ -19,7 +19,16 @@ namespace EternalPatcher
         /// <summary>
         /// Game build list
         /// </summary>
-        private static List<GameBuild> GameBuilds = new List<GameBuild>();      
+        private static List<GameBuild> GameBuilds = new List<GameBuild>();
+
+        /// <summary>
+        /// Gets the current patcher version
+        /// </summary>
+        /// <returns>the current patcher version string</returns>
+        private static string GetPatcherVersion()
+        {
+            return $"v{typeof(Patcher).Assembly.GetName().Version.Major}";
+        }
 
         /// <summary>
         /// Check if there are any patches loaded
@@ -59,7 +68,7 @@ namespace EternalPatcher
 
             using (var webClient = new WebClient())
             {
-                var latestPatchDefMd5Checksum = webClient.DownloadString($"http://{updateServerIp}/{PatchDefinitionsFileNameBase}.md5");
+                var latestPatchDefMd5Checksum = webClient.DownloadString($"http://{updateServerIp}/{PatchDefinitionsFileNameBase}_{GetPatcherVersion()}.md5");
 
                 if (!currentPatchDefMd5Checksum.Equals(latestPatchDefMd5Checksum))
                 {
@@ -79,7 +88,9 @@ namespace EternalPatcher
 
             using (var webClient = new WebClient())
             {
-                 webClient.DownloadFile($"http://{updateServerIp}/{PatchDefinitionsFileNameBase}.def", $"{PatchDefinitionsFileNameBase}.def");
+                 webClient.DownloadFile(
+                     $"http://{updateServerIp}/{PatchDefinitionsFileNameBase}_{GetPatcherVersion()}.def",
+                     $"{PatchDefinitionsFileNameBase}.def");
             }
         }
 
@@ -125,10 +136,11 @@ namespace EternalPatcher
                         continue;
                     }
 
-                    // 'patch' keyword is reserved, assume this is a game build definition        
+                    // 'patch' and 'all' keywords are reserved, assume this is a game build definition
                     // syntax:
                     // id=executable name:md5 checksum
-                    if (!dataDefinition[0].Equals("patch", StringComparison.InvariantCultureIgnoreCase))
+                    if (!dataDefinition[0].Equals("patch", StringComparison.InvariantCultureIgnoreCase)
+                        && !dataDefinition[0].Equals("all", StringComparison.InvariantCultureIgnoreCase))
                     {
                         string[] gameBuildData = dataDefinition[1].Split(':');
 
@@ -144,14 +156,14 @@ namespace EternalPatcher
                         }
 
                         // TODO: Validate MD5 checksum
-                        
+
                         GameBuilds.Add(new GameBuild(dataDefinition[0], gameBuildData[0], gameBuildData[1]));
                     }
                     else
                     {
                         // patch defintion
                         // syntax:
-                        // patch=description:compatible build ids (comma separated):offset:hex patch
+                        // patch=description:type (offset|pattern):(compatible build ids (comma separated)|all):(offset|pattern):hex patch
 
                         string[] patchData = dataDefinition[1].Split(':');
 
@@ -161,19 +173,46 @@ namespace EternalPatcher
                         }
 
                         // Bad syntax, skip this line
-                        if (patchData.Length != 4)
+                        if (patchData.Length != 5)
                         {
                             continue;
                         }
 
                         // Bad patch, skip this line
-                        if (patchData[3].Length % 2 != 0)
+                        if (patchData[4].Length % 2 != 0)
                         {
                             continue;
                         }
 
+                        // Get the patch type
+                        Type patchType = typeof(Patch);
+
+                        if (patchData[1].Equals("offset", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            patchType = typeof(OffsetPatch);
+                        }
+                        else if (patchData[1].Equals("pattern", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            patchType = typeof(PatternPatch);
+                        }
+                        else
+                        {
+                            // Bad patch, skip this line
+                            continue;
+                        }
+
+                        // Patch specific checks now
+                        if (patchType == typeof(PatternPatch))
+                        {
+                            // Bad patch, skip this line
+                            if (patchData[3].Length % 2 != 0)
+                            {
+                                continue;
+                            }
+                        }
+
                         // Get the game builds assigned to this patch
-                        string[] gameBuilds = patchData[1].Split(',');
+                        string[] gameBuilds = patchData[2].Split(',');
 
                         // Bad patch, skip this line
                         if (gameBuilds.Length == 0)
@@ -186,32 +225,56 @@ namespace EternalPatcher
                             gameBuilds[i] = gameBuilds[i].Trim();
                         }
 
-                        // Load the offset
-                        long offset = Convert.ToInt64(patchData[2], 16); ;
-
                         // Load the hex patch
-                        byte[] patch = new byte[patchData[3].Length / 2];
+                        byte[] hexPatch = new byte[patchData[4].Length / 2];
 
-                        for (var i = 0; i < patchData[3].Length; i += 2)
+                        for (var i = 0; i < patchData[4].Length; i += 2)
                         {
-                            patch[i / 2] = Convert.ToByte(patchData[3].Substring(i, 2), 16);
+                            hexPatch[i / 2] = Convert.ToByte(patchData[4].Substring(i, 2), 16);
                         }
 
-                        var offsetPatch = new OffsetPatch(patchData[0], offset, patch);
+                        Patch patch;
+
+                        if (patchType == typeof(OffsetPatch))
+                        {
+                            // Load the offset and create the offset patch
+                            patch = new OffsetPatch(patchData[0], Convert.ToInt64(patchData[3], 16), hexPatch);
+                        }
+                        else
+                        {
+                            // Load the pattern and create the pattern patch
+                            byte[] hexPattern = new byte[patchData[3].Length / 2];
+
+                            for (var i = 0; i < patchData[3].Length; i += 2)
+                            {
+                                hexPattern[i / 2] = Convert.ToByte(patchData[3].Substring(i, 2), 16);
+                            }
+
+                            patch = new PatternPatch(patchData[0], hexPattern, hexPatch);
+                        }
+
+                        // Bad patch, skip this line
+                        if (patch == null)
+                        {
+                            continue;
+                        }
 
                         // Assign the patch to the specified game builds
                         for (var i = 0; i < gameBuilds.Length; i++)
                         {
                             foreach (var gameBuild in GameBuilds)
                             {
-                                if (gameBuild.Id.Equals(gameBuilds[i]))
+                                if (gameBuild.Id.Equals(gameBuilds[i])
+                                    || (gameBuilds.Length == 1
+                                        && gameBuilds[0].Equals("all",
+                                        StringComparison.InvariantCultureIgnoreCase)))
                                 {
-                                    gameBuild.Patches.Add(offsetPatch);
+                                    gameBuild.Patches.Add(patch);
                                 }
                             }
                         }
                     }
-                }                
+                }
             }
         }
 
@@ -236,6 +299,24 @@ namespace EternalPatcher
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Applies the given patches to the given binary file at the given file path
+        /// </summary>
+        /// <param name="binaryFilePath">binary file path</param>
+        /// <param name="patches">patch list</param>
+        /// <returns>list containing the patching result of each patch</returns>
+        public static List<PatchingResult> ApplyPatches(string binaryFilePath, List<Patch> patches)
+        {
+            var patchingResults = new List<PatchingResult>();
+
+            foreach (var patch in patches)
+            {
+                patchingResults.Add(new PatchingResult(patch, patch.Apply(binaryFilePath)));
+            }
+
+            return patchingResults;
         }
     }
 }

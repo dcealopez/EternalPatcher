@@ -88,6 +88,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="IPatch.cs" />
+    <Compile Include="Patch.cs" />
+    <Compile Include="PatternPatch.cs" />
     <Compile Include="Util.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -106,7 +109,6 @@
   <ItemGroup>
     <Compile Include="Patcher.cs" />
     <Compile Include="OffsetPatch.cs" />
-    <Compile Include="OffsetPatcher.cs" />
     <Compile Include="PatchingResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>

@@ -25,7 +25,7 @@ namespace EternalPatcher
         /// <summary>
         /// Available patches for the game build
         /// </summary>
-        public List<OffsetPatch> Patches = new List<OffsetPatch>();
+        public List<Patch> Patches = new List<Patch>();
 
         /// <summary>
         /// Creates a new game build object

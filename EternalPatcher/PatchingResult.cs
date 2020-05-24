@@ -8,7 +8,7 @@
         /// <summary>
         /// Offset patch applied
         /// </summary>
-        public OffsetPatch Patch;
+        public Patch Patch;
 
         /// <summary>
         /// Patching result message
@@ -18,9 +18,9 @@
         /// <summary>
         /// Creates a new patching result object
         /// </summary>
-        /// <param name="patch">offset patch</param>
+        /// <param name="patch">patch</param>
         /// <param name="message">message</param>
-        public PatchingResult(OffsetPatch patch, bool success)
+        public PatchingResult(Patch patch, bool success)
         {
             Patch = patch;
             Success = success;

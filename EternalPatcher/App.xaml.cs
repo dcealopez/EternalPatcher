@@ -16,7 +16,7 @@ namespace EternalPatcher
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-                        
+
             // Used for command line option parsing
             bool performUpdate = false;
             string filePath = string.Empty;
@@ -55,7 +55,7 @@ namespace EternalPatcher
 
                 // Update first if required
                 try
-                {        
+                {
                     if (performUpdate)
                     {
                         Console.WriteLine("Checking for updates...");
@@ -69,8 +69,8 @@ namespace EternalPatcher
                         else
                         {
                             Console.WriteLine("No updates available.");
-                        }                        
-                    }                    
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -88,7 +88,7 @@ namespace EternalPatcher
 
                 // Load the patch definitions file
                 try
-                {                    
+                {
                     Console.WriteLine("Loading patch definitions file...");
                     Patcher.LoadPatchDefinitions();
                     Console.WriteLine("Done.");
@@ -98,12 +98,12 @@ namespace EternalPatcher
                     Console.Error.WriteLine($"An error occured while loading the patch definitions file: {ex}");
                     Application.Current.Shutdown(1);
                     return;
-                }            
+                }
 
                 // Stop if there are no patches loaded
                 if (!Patcher.AnyPatchesLoaded())
                 {
-                    Console.Out.WriteLine($"Unable to patch: 0 patches loaded");                    
+                    Console.Out.WriteLine($"Unable to patch: 0 patches loaded");
                     Application.Current.Shutdown(1);
                     return;
                 }
@@ -136,10 +136,10 @@ namespace EternalPatcher
                 int successes = 0;
 
                 try
-                {                                        
+                {
                     Console.WriteLine("Applying patches...");
 
-                    foreach (var patchResult in OffsetPatcher.Patch(filePath, gameBuild.Patches))
+                    foreach (var patchResult in Patcher.ApplyPatches(filePath, gameBuild.Patches))
                     {
                         if (patchResult.Success)
                         {
