@@ -283,6 +283,13 @@ namespace EternalPatcher
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
 
+                // Load current patch definitions anyway
+                if (!Patcher.AnyPatchesLoaded())
+                {
+                    Dispatcher.Invoke(() => PatcherStatus.Text = "Loading patch definitions...");
+                    Patcher.LoadPatchDefinitions();
+                }
+
                 Dispatcher.Invoke(() => PatchButton.IsEnabled = true);
                 Dispatcher.Invoke(() => CheckUpdatesButton.IsEnabled = true);
                 Dispatcher.Invoke(() => PatcherStatus.Text = "Ready.");
@@ -304,6 +311,13 @@ namespace EternalPatcher
                         "Error",
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
+
+                    // Load current patch definitions anyway
+                    if (!Patcher.AnyPatchesLoaded())
+                    {
+                        Dispatcher.Invoke(() => PatcherStatus.Text = "Loading patch definitions...");
+                        Patcher.LoadPatchDefinitions();
+                    }
 
                     Dispatcher.Invoke(() => PatchButton.IsEnabled = true);
                     Dispatcher.Invoke(() => CheckUpdatesButton.IsEnabled = true);
