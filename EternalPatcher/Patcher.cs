@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
+using System.Linq;
 using System.Net;
 
 namespace EternalPatcher
@@ -136,11 +137,10 @@ namespace EternalPatcher
                         continue;
                     }
 
-                    // 'patch' and 'all' keywords are reserved, assume this is a game build definition
+                    // 'patch' keyword is reserved, assume this is a game build definition
                     // syntax:
-                    // id=executable name:md5 checksum
-                    if (!dataDefinition[0].Equals("patch", StringComparison.InvariantCultureIgnoreCase)
-                        && !dataDefinition[0].Equals("all", StringComparison.InvariantCultureIgnoreCase))
+                    // id=executable name:md5 checksum:patch group ids (comma separated)
+                    if (!dataDefinition[0].Equals("patch", StringComparison.InvariantCultureIgnoreCase))
                     {
                         string[] gameBuildData = dataDefinition[1].Split(':');
 
@@ -150,21 +150,18 @@ namespace EternalPatcher
                         }
 
                         // Bad syntax, skip this line
-                        if (gameBuildData.Length != 2)
+                        if (gameBuildData.Length != 3)
                         {
                             continue;
                         }
 
-                        // TODO: Validate MD5 checksum
-
-                        GameBuilds.Add(new GameBuild(dataDefinition[0], gameBuildData[0], gameBuildData[1]));
+                        GameBuilds.Add(new GameBuild(dataDefinition[0], gameBuildData[0], gameBuildData[1], gameBuildData[2].Split(',').ToList()));
                     }
                     else
                     {
                         // patch defintion
                         // syntax:
                         // patch=description:type (offset|pattern):(compatible build ids (comma separated)|all):(offset|pattern):hex patch
-
                         string[] patchData = dataDefinition[1].Split(':');
 
                         for (var i = 0; i < patchData.Length; i++)
@@ -185,7 +182,7 @@ namespace EternalPatcher
                         }
 
                         // Get the patch type
-                        Type patchType = typeof(Patch);
+                        var patchType = typeof(Patch);
 
                         if (patchData[1].Equals("offset", StringComparison.InvariantCultureIgnoreCase))
                         {
@@ -211,18 +208,18 @@ namespace EternalPatcher
                             }
                         }
 
-                        // Get the game builds assigned to this patch
-                        string[] gameBuilds = patchData[2].Split(',');
+                        // Get the patch group ids assigned to this patch
+                        string[] patchGroupIds = patchData[2].Split(',');
 
                         // Bad patch, skip this line
-                        if (gameBuilds.Length == 0)
+                        if (patchGroupIds.Length == 0)
                         {
                             continue;
                         }
 
-                        for (var i = 0; i < gameBuilds.Length; i++)
+                        for (var i = 0; i < patchGroupIds.Length; i++)
                         {
-                            gameBuilds[i] = gameBuilds[i].Trim();
+                            patchGroupIds[i] = patchGroupIds[i].Trim();
                         }
 
                         // Load the hex patch
@@ -259,16 +256,30 @@ namespace EternalPatcher
                             continue;
                         }
 
-                        // Assign the patch to the specified game builds
-                        for (var i = 0; i < gameBuilds.Length; i++)
+                        // Assign the patch to the specified game builds with matching patch group ids
+                        for (var i = 0; i < patchGroupIds.Length; i++)
                         {
                             foreach (var gameBuild in GameBuilds)
                             {
-                                if (gameBuild.Id.Equals(gameBuilds[i])
-                                    || (gameBuilds.Length == 1
-                                        && gameBuilds[0].Equals("all",
-                                        StringComparison.InvariantCultureIgnoreCase)))
+                                if (gameBuild.PatchGroupIds.Contains(patchGroupIds[i]))
                                 {
+                                    // Don't add the patch if another with the same id was already added
+                                    bool alreadyExists = false;
+
+                                    foreach (var currentPatch in gameBuild.Patches)
+                                    {
+                                        if (currentPatch.Description.Equals(patch.Description, StringComparison.InvariantCultureIgnoreCase))
+                                        {
+                                            alreadyExists = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if (alreadyExists)
+                                    {
+                                        break;
+                                    }
+
                                     gameBuild.Patches.Add(patch);
                                 }
                             }
