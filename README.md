@@ -40,14 +40,22 @@ An example of a patch definitions file and it's syntax:
 
 ```
 # game build definitions
-# id=executable name:md5 checksum
-steamv1=DOOMEternalx64vk.exe:7ea73e0ee1a2066dc43502930ededced
-bnetv1=DOOMEternalx64vk.exe:7bb1e931cbbbc3d2d3cea1dd6df05539
+# id=executable name:md5 checksum:patch group ids (comma separated)
+steamv1=DOOMEternalx64vk.exe:7ea73e0ee1a2066dc43502930ededced:global
+steamdlc2=DOOMEternalx64vk.exe:96556f8b0dfc56111090a6b663969b86:global,dlc2
+bnetv1=DOOMEternalx64vk.exe:7bb1e931cbbbc3d2d3cea1dd6df05539:global
+bnetdlc2=DOOMEternalx64vk.exe:b4eef9284826e5ffaedbcd73fe6d2ae6:global,dlc2
 
 # patches
-# patch=description:compatible build ids (comma separated):offset:hex patch
+# for patches with the same id (description), to support multiple game builds for different patterns, position the 'global' patch as the last one
+# otherwise it will override other patches with different patch group ids
+# syntax -> patch=description (serves as the id):type (offset|pattern):(compatible patch group ids (comma separated)):(offset|pattern):hex patch
 
 # skip data checksum checks (by emoose)
-patch=skip data checksum checks:steamv1:9047CF:EB
-patch=skip data checksum checks:bnetv1:8E8B6F:EB
+patch=skip data checksum checks:global:9047CF:EB
+patch=skip data checksum checks:global:8E8B6F:EB
+
+# unrestrict binds (by SunBeam, ported by emoose)
+patch=unrestrict binds:pattern:dlc2:084C8B03BA01:084C8B03BA00
+patch=unrestrict binds:pattern:global:084C8B0FBA01:084C8B0FBA00
 ```
