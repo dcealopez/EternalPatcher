@@ -52,8 +52,7 @@ bnetdlc2=DOOMEternalx64vk.exe:b4eef9284826e5ffaedbcd73fe6d2ae6:global,dlc2
 # syntax -> patch=description (serves as the id):type (offset|pattern):(compatible patch group ids (comma separated)):(offset|pattern):hex patch
 
 # skip data checksum checks (by emoose)
-patch=skip data checksum checks:global:9047CF:EB
-patch=skip data checksum checks:global:8E8B6F:EB
+patch=skip data checksum checks:pattern:global:741E8B534841B8EFBEADDE:EB1E8B534841B8EFBEADDE
 
 # unrestrict binds (by SunBeam, ported by emoose)
 patch=unrestrict binds:pattern:dlc2:084C8B03BA01:084C8B03BA00
